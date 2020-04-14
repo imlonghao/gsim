@@ -16,4 +16,3 @@ jobs:
           name: imlonghao/gsimd:latest
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          workdir: cmd/gsimd
