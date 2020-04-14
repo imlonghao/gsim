@@ -44,6 +44,11 @@ func worker(task types.Task) {
 					matchWhitelist = true
 					break
 				}
+			case 4:
+				if strings.Contains(result.Path, whitelist.Content) {
+					matchWhitelist = true
+					break
+				}
 			}
 		}
 		existed := db.IfResultExisted(result.ID)
