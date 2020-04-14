@@ -98,7 +98,7 @@ func main() {
 		fmt.Printf("Running cron job results cleaner\n")
 		var results []types.Result
 		var whitelists []types.Whitelist
-		db.DB.Table("results").Find(&results)
+		db.DB.Table("results").Where("status = 0").Find(&results)
 		db.DB.Table("whitelists").Find(&whitelists)
 		for _, result := range results {
 			if isMatchWhitelist(result, whitelistFilter(result.TaskID, whitelists)) {
