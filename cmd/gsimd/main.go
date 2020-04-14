@@ -20,15 +20,15 @@ func isMatchWhitelist(result types.Result, whitelists []types.Whitelist) bool {
 				return true
 			}
 		case 2:
-			if strings.Contains(result.Repo, whitelist.Content) {
+			if strings.Contains(strings.ToLower(result.Repo), whitelist.Content) {
 				return true
 			}
 		case 3:
-			if strings.Contains(result.Code, whitelist.Content) {
+			if strings.Contains(strings.ToLower(result.Code), whitelist.Content) {
 				return true
 			}
 		case 4:
-			if strings.Contains(result.Path, whitelist.Content) {
+			if strings.Contains(strings.ToLower(result.Path), whitelist.Content) {
 				return true
 			}
 		}
