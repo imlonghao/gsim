@@ -94,7 +94,7 @@ func main() {
 			go worker(task)
 		}
 	})
-	c.AddFunc("*/30 * * * *", func() {
+	c.AddFunc("* * * * *", func() {
 		fmt.Printf("Running cron job results cleaner\n")
 		var results []types.Result
 		var whitelists []types.Whitelist
