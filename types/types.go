@@ -38,7 +38,7 @@ type Result struct {
 	Username  string
 	Repo      string
 	Path      string
-	Url       string
+	Url       string `gorm:"type:varchar(1024)"`
 	Code      string `gorm:"type:mediumtext"`
 }
 
