@@ -11,9 +11,9 @@ func GetTasks() []types.Task {
 	return tasks
 }
 
-func GetWhitelistsForID(id uint) []types.Whitelist {
+func GetWhitelists() []types.Whitelist {
 	var whitelists []types.Whitelist
-	DB.Where("task_id = ?", id).Find(&whitelists)
+	DB.Table("whitelists").Find(&whitelists)
 	return whitelists
 }
 

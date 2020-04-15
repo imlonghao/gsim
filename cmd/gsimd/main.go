@@ -48,7 +48,7 @@ func worker(task types.Task) {
 		fmt.Printf("Task %d fail, %v\n", task.ID, err)
 		return
 	}
-	whitelists := db.GetWhitelistsForID(task.ID)
+	whitelists := db.GetWhitelists()
 	for _, result := range results {
 		matchWhitelist := isMatchWhitelist(result, whitelists)
 		existed := db.IfResultExisted(result.ID)
@@ -66,16 +66,6 @@ func worker(task types.Task) {
 			db.DB.Table("results").Create(&result)
 		}
 	}
-}
-
-func whitelistFilter(id uint, whitelists []types.Whitelist) []types.Whitelist {
-	var result []types.Whitelist
-	for _, whitelist := range whitelists {
-		if whitelist.TaskID == id {
-			result = append(result, whitelist)
-		}
-	}
-	return result
 }
 
 func main() {
@@ -101,7 +91,7 @@ func main() {
 		db.DB.Table("results").Where("status = 0").Find(&results)
 		db.DB.Table("whitelists").Find(&whitelists)
 		for _, result := range results {
-			if isMatchWhitelist(result, whitelistFilter(result.TaskID, whitelists)) {
+			if isMatchWhitelist(result, whitelists) {
 				db.DB.Table("results").Delete(&result)
 			}
 		}
