@@ -1,4 +1,7 @@
 {
+  "assignees": [
+    "imlonghao"
+  ],
   "extends": [
     "config:base"
   ]
