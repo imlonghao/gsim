@@ -25,7 +25,7 @@ type Whitelist struct {
 	CreatedAt time.Time
 	TaskID    uint
 	Task      Task `gorm:"foreignkey:TaskID"`
-	Type      uint // 1: username equal 2: reponame contain 3: file contain
+	Type      uint // 1: username equal 2: reponame contain 3: file contain 4: path contain
 	Content   string
 }
 
