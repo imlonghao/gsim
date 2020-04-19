@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/imlonghao/gsim/db"
 	"github.com/imlonghao/gsim/github"
+	"github.com/imlonghao/gsim/sentry"
 	"github.com/imlonghao/gsim/types"
 	"github.com/robfig/cron/v3"
 	"strings"
@@ -40,15 +41,23 @@ func worker(task types.Task) {
 	defer func() {
 		fmt.Printf("Task %d is finishing\n", task.ID)
 		task.NextScanTime = time.Now().Add(time.Duration(task.Interval) * time.Second)
-		db.DB.Table("tasks").Save(&task)
+		err := db.DB.Table("tasks").Save(&task).Error
+		if err != nil {
+			sentry.SENTRY.CaptureException(err)
+		}
 		taskIsRunning[task.ID] = false
 	}()
 	results, err := github.Search(task.Rule)
 	if err != nil {
+		sentry.SENTRY.CaptureException(err)
 		fmt.Printf("Task %d fail, %v\n", task.ID, err)
 		return
 	}
-	whitelists := db.GetWhitelists()
+	whitelists, err := db.GetWhitelists()
+	if err != nil {
+		sentry.SENTRY.CaptureException(err)
+		return
+	}
 	for _, result := range results {
 		matchWhitelist := isMatchWhitelist(result, whitelists)
 		existed := db.IfResultExisted(result.ID)
@@ -73,7 +82,11 @@ func main() {
 	c := cron.New()
 	c.AddFunc("* * * * *", func() {
 		fmt.Printf("Running cron job\n")
-		tasks := db.GetTasks()
+		tasks, err := db.GetTasks()
+		if err != nil {
+			sentry.SENTRY.CaptureException(err)
+			return
+		}
 		for _, task := range tasks {
 			if taskIsRunning[task.ID] {
 				fmt.Printf("Task %d is running, skipping\n", task.ID)

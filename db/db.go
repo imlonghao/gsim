@@ -5,6 +5,7 @@ import (
 	"github.com/imlonghao/gsim/types"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"log"
 	"os"
 )
 
@@ -16,7 +17,7 @@ func init() {
 	var err error
 	DB, err = gorm.Open("mysql", target)
 	if err != nil {
-		panic(err)
+		log.Fatalf("db.Init: %s", err)
 	}
 	DB.AutoMigrate(&types.Task{})
 	DB.AutoMigrate(&types.Token{})

@@ -5,16 +5,22 @@ import (
 	"time"
 )
 
-func GetTasks() []types.Task {
+func GetTasks() ([]types.Task, error) {
 	var tasks []types.Task
-	DB.Where("next_scan_time < ?", time.Now()).Find(&tasks)
-	return tasks
+	err := DB.Where("next_scan_time < ?", time.Now()).Find(&tasks).Error
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
 
-func GetWhitelists() []types.Whitelist {
+func GetWhitelists() ([]types.Whitelist, error) {
 	var whitelists []types.Whitelist
-	DB.Table("whitelists").Find(&whitelists)
-	return whitelists
+	err := DB.Table("whitelists").Find(&whitelists).Error
+	if err != nil {
+		return nil, err
+	}
+	return whitelists, nil
 }
 
 func IfResultExisted(id string) bool {
