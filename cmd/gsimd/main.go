@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"github.com/imlonghao/gsim/db"
 	"github.com/imlonghao/gsim/github"
+	"github.com/imlonghao/gsim/log"
 	"github.com/imlonghao/gsim/sentry"
 	"github.com/imlonghao/gsim/types"
 	"github.com/robfig/cron/v3"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -39,7 +40,7 @@ func isMatchWhitelist(result types.Result, whitelists []types.Whitelist) bool {
 
 func worker(task types.Task) {
 	defer func() {
-		fmt.Printf("Task %d is finishing\n", task.ID)
+		log.Logger.Info("task finished", zap.Uint("id", task.ID))
 		task.NextScanTime = time.Now().Add(time.Duration(task.Interval) * time.Second)
 		err := db.DB.Table("tasks").Save(&task).Error
 		if err != nil {
@@ -50,7 +51,7 @@ func worker(task types.Task) {
 	results, err := github.Search(task.Rule)
 	if err != nil {
 		sentry.SENTRY.CaptureException(err)
-		fmt.Printf("Task %d fail, %v\n", task.ID, err)
+		log.Logger.Error("task failed", zap.Uint("id", task.ID), zap.Error(err))
 		return
 	}
 	whitelists, err := db.GetWhitelists()
@@ -65,13 +66,21 @@ func worker(task types.Task) {
 			if existed {
 				db.DB.Table("results").Delete(&result)
 			}
-			fmt.Printf("Task %d with %s/%s %s matching the whitelist\n", task.ID, result.Username, result.Repo, result.Path)
+			log.Logger.Info("whitelist matched",
+				zap.Uint("id", task.ID),
+				zap.String("username", result.Username),
+				zap.String("repo", result.Repo),
+				zap.String("path", result.Path))
 			continue
 		}
 		result.TaskID = task.ID
 		result.Task = task
 		if existed {
-			fmt.Printf("Task %d with %s/%s %s adding to db\n", task.ID, result.Username, result.Repo, result.Path)
+			log.Logger.Info("result added",
+				zap.Uint("id", task.ID),
+				zap.String("username", result.Username),
+				zap.String("repo", result.Repo),
+				zap.String("path", result.Path))
 			db.DB.Table("results").Create(&result)
 		}
 	}
@@ -81,7 +90,7 @@ func main() {
 	taskIsRunning = make(map[uint]bool)
 	c := cron.New()
 	c.AddFunc("* * * * *", func() {
-		fmt.Printf("Running cron job\n")
+		log.Logger.Info("Cron job starting", zap.String("module", "updater"))
 		tasks, err := db.GetTasks()
 		if err != nil {
 			sentry.SENTRY.CaptureException(err)
@@ -89,16 +98,16 @@ func main() {
 		}
 		for _, task := range tasks {
 			if taskIsRunning[task.ID] {
-				fmt.Printf("Task %d is running, skipping\n", task.ID)
+				log.Logger.Warn("task is running", zap.Uint("id", task.ID))
 				continue
 			}
-			fmt.Printf("Task %d is starting\n", task.ID)
+			log.Logger.Info("task is starting", zap.Uint("id", task.ID))
 			taskIsRunning[task.ID] = true
 			go worker(task)
 		}
 	})
 	c.AddFunc("* * * * *", func() {
-		fmt.Printf("Running cron job results cleaner\n")
+		log.Logger.Info("Cron job starting", zap.String("module", "result cleaner"))
 		var results []types.Result
 		var whitelists []types.Whitelist
 		db.DB.Table("results").Where("status = 0").Find(&results)
